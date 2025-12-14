@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Planner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
+            color: #f1f5f9;
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: #0f172a; 
+            color: #f1f5f9;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border-radius: 20px; 
+            overflow: hidden; 
+        }
+        .header { 
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%); 
+            color: #f8fafc;
+            padding: 30px; 
+            text-align: center; 
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .status { 
+            padding: 20px; 
+            background: #1e293b; 
+            color: #f1f5f9; 
+            text-align: center; 
+            font-weight: bold; 
+        }
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; 
+            padding: 30px; 
+        }
+        .card { 
+            background: #1e293b00; 
+            border: 1px solid #334155;
+            color: #f1f5f9;
+            border-radius: 15px; 
+            padding: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+        }
+        .card h3 { color: #f1f5f997; margin-bottom: 15px; font-size: 1.3em; }
+        .metric { font-size: 2.5em; font-weight: bold; color: #f1f5f9e9; }
+        .section { padding: 30px; border-bottom: 1px solid #eee; }
+        .section:last-child { border-bottom: none; }
+        .section h2 { color: #f1f5f9e9; margin-bottom: 20px; font-size: 1.8em; }
+        button { 
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
+            color: white;
+            border: 1px #3341553f; 
+            padding: 12px 24px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            transition: transform 0.2s; 
+            margin-right: 10px;
+        }
+        button:hover { transform: translateY(-2px); }
+        .timetable-btn { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+        .list-container, .timetable-container { margin-top: 20px; min-height: 100px; }
+        .list-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 20px; 
+            background: #0f172a;  
+            border: 1px solid #334155;
+            color: #f1f5f9; 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            transition: all 0.3s; 
+        }
+        .list-item:hover { box-shadow: 0 5px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .list-item.completed { opacity: 0.6; background: #192230; }
+        .switch { 
+            position: relative; 
+            display: inline-block; 
+            width: 60px; 
+            height: 34px; 
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { 
+            position: absolute; 
+            cursor: pointer; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            background-color: #ccc; 
+            transition: .4s; 
+            border-radius: 34px; 
+        }
+        .slider:before { 
+            position: absolute; 
+            content: ""; 
+            height: 26px; 
+            width: 26px; 
+            left: 4px; 
+            bottom: 4px; 
+            background-color: white; 
+            transition: .4s; 
+            border-radius: 50%; 
+        }
+        input:checked + .slider { background-color: #334155; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .delete-btn { 
+            background: #ef444487;
+            margin-left: 10px; 
+            padding: 10px 12px; 
+            font-size: 14px; 
+        }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.5); 
+        }
+        .modal-content { 
+            background: #192230;
+            color: #f1f5f9;
+            margin: 10% auto; 
+            padding: 30px; 
+            border-radius: 15px; 
+            width: 90%; 
+            max-width: 500px; 
+            position: relative; 
+        }
+        .timetable-modal .modal-content { max-width: 900px; max-height: 80vh; overflow-y: auto; }
+        .close { 
+            position: absolute; 
+            right: 20px; 
+            top: 15px; 
+            font-size: 28px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            color: #aaa; 
+        }
+        .close:hover { color: #000; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        input, select { 
+            padding: 15px; 
+            background: #1e293b;
+            border: 2px solid #334155;
+            color: #f1f5f9; 
+            border-radius: 10px; 
+            font-size: 16px; 
+        }
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: #3341553f;
+        }
+        .error { color: #ff6b6b; padding: 10px; background: #ffe6e6; border-radius: 8px; margin: 10px 0; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+            font-size: 14px;
+        }
+        th, td { 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #eee; 
+        }
+        th { 
+            background: #334155; 
+            font-weight: 600; 
+            position: sticky; 
+            top: 0;
+        }
+        .time-slot { 
+            background: #1e293b; /* Dark emerald */
+            color: #f1f5f9dc;
+            border: 1px solid #3341553f;
+            text-wrap: center;
+            border-radius: 8px; 
+            padding: 8px; 
+            margin: 4px 0; 
+            font-weight: 500;
+        }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        @media (max-width: 768px) { 
+            .dashboard { grid-template-columns: 1fr; } 
+            .list-item { flex-direction: column; align-items: flex-start; gap: 15px; } 
+            table { font-size: 12px; }
+            th, td { padding: 8px; }
+        }
+        .tabs-nav {
+            display: flex;
+            background: #334155;
+            border-bottom: 2px solid #475569;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: #f8fafc;
+            border-bottom-color: #94a3b8;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .tabs-nav { flex-wrap: nowrap; }
+            .tab-btn { font-size: 14px; padding: 12px 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📚 Student Planner</h1>
+        <p>Track attendance, assignments & timetable</p>
+    </div>
+
+    <div class="status" id="status" style="display:none;">Connecting...</div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="showTab('dashboard')">📊 Dashboard</button>
+        <button class="tab-btn" onclick="showTab('subjects')">📖 Subjects</button>
+        <button class="tab-btn" onclick="showTab('assignments')">📋 Assignments</button>
+        <button class="tab-btn" onclick="showTab('timetable')">📅 Timetable</button>
+    </div>
+
+    <!-- DASHBOARD TAB -->
+    <div id="dashboard" class="tab-content active">
+        <div class="dashboard" id="dashboard-cards"></div>
+    </div>
+
+    <!-- SUBJECTS TAB -->
+    <div id="subjects" class="tab-content">
+        <div class="section">
+            <h2>📖 Subjects</h2>
+            <button onclick="showAddSubjectModal()">+ Add Subject</button>
+            <div id="subjects-list" class="list-container"></div>
+        </div>
+    </div>
+
+    <!-- ASSIGNMENTS TAB -->
+    <div id="assignments" class="tab-content">
+        <div class="section">
+            <h2>📋 Assignments</h2>
+            <button onclick="showAddAssignmentModal()">+ Add Assignment</button>
+            <div id="assignments-list" class="list-container"></div>
+        </div>
+    </div>
+
+    <!-- TIMETABLE TAB -->
+    <div id="timetable" class="tab-content">
+        <div class="section">
+            <h2>📅 Timetable</h2>
+            <div class="controls">
+                <button onclick="showAddTimetableModal()">+ Add Class</button>
+                <button class="timetable-btn" onclick="showWeeklyTimetable()">👁️ View Weekly Timetable</button>
+            </div>
+            <div id="timetable-list" class="list-container"></div>
+        </div>
+    </div>
+</div>
+
+    <!-- TIMETABLE MODAL -->
+    <div id="timetable-modal" class="modal timetable-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeTimetableModal()">&times;</span>
+            <h3>📅 Weekly Timetable</h3>
+            <div id="weekly-timetable"></div>
+        </div>
+    </div>
+
+    <!-- SUBJECT MODAL -->
+    <div id="add-subject-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddSubjectModal()">&times;</span>
+            <h3>Add Subject</h3>
+            <div id="subject-error" class="error" style="display:none;"></div>
+            <form id="add-subject-form">
+                <input type="text" id="subject-code" placeholder="Subject Code (e.g. CS101)" required>
+                <input type="text" id="subject-name" placeholder="Subject Name" required>
+                <input type="text" id="subject-professor" placeholder="Professor Name" required>
+                <input type="number" id="subject-attendance" placeholder="Attendance (0)" value="0" min="0">
+                <input type="number" id="subject-total" placeholder="Total Classes (0)" value="0" min="0">
+                <button type="submit">Add Subject</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ASSIGNMENT MODAL -->
+    <div id="add-assignment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddAssignmentModal()">&times;</span>
+            <h3>Add Assignment</h3>
+            <div id="assignment-error" class="error" style="display:none;"></div>
+            <form id="add-assignment-form">
+                <select id="assignment-subject" required>
+                    <option value="">Select Subject</option>
+                </select>
+                <input type="text" id="assignment-title" placeholder="Assignment Title" required>
+                <input type="date" id="assignment-deadline" required>
+                <button type="submit">Add Assignment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TIMETABLE ADD MODAL -->
+    <div id="add-timetable-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddTimetableModal()">&times;</span>
+            <h3>Add Class</h3>
+            <form id="add-timetable-form">
+                <select id="timetable-day" required>
+                    <option value="">Select Day</option>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                </select>
+                <select id="timetable-time" required>
+                    <option value="">Select Time Slot</option>
+                    <option value="8:00-8:50">8:00-8:50</option>
+                    <option value="9:00-9:50">9:00-9:50</option>
+                    <option value="10:00-10:50">10:00-10:50</option>
+                    <option value="11:00-11:50">11:00-11:50</option>
+                    <option value="12:00-12:50">12:00-12:50</option>
+                    <option value="14:00-15:40">14:00-15:40</option>
+                    <option value="15:50-17:30">15:50-17:30</option>
+                    <option value="17:40-19:20">17:40-19:20</option>
+                </select>
+
+                <select id="timetable-subject" required>
+                    <option value="">Select Subject</option>
+                </select>
+                <input type="text" id="timetable-room" placeholder="Room (e.g. A101)">
+                <button type="submit">Add Class</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+const API_BASE = 'http://127.0.0.1:8000/api';
+
+window.onload = async () => {
+    await testConnection();
+};
+
+async function testConnection() {
+    try {
+        const response = await fetch(`${API_BASE}/subjects`);
+        if (response.ok) {
+            document.getElementById('status').innerHTML = '✅ Backend connected! Loading data...';
+            setTimeout(() => {
+                document.getElementById('status').style.display = 'none';
+                loadAllData();
+            }, 1500);
+        }
+    } catch (e) {
+        document.getElementById('status').innerHTML = '❌ Backend not running. Start <code>python app.py</code> on port 8000';
+        document.getElementById('status').style.color = '#ff6b6b';
+    }
+}
+
+async function loadAllData() {
+    loadDashboard();
+}
+
+// ========== SUBJECTS ==========
+async function loadSubjects() {
+    try {
+        const response = await fetch(`${API_BASE}/subjects`);
+        const subjects = await response.json();
+        document.getElementById('subjects-list').innerHTML = subjects.map(s => `
+            <div class="list-item">
+                <div>
+                    <strong>${s.code} - ${s.name}</strong><br>
+                    <small>Prof: ${s.professor}</small><br>
+                    <small>Attendance: ${s.attendance}/${s.total_classes} (${s.attendance_pct}%)</small>
+                </div>
+                <div>
+                    <button onclick="updateAttendance(${s.id}, 'increment')">+</button>
+                    <button onclick="updateAttendance(${s.id}, 'decrement')">-</button>
+                    <button onclick="deleteSubject(${s.id})" class="delete-btn">🗑️</button>
+                </div>
+            </div>
+        `).join('') || '<p>No subjects added yet</p>';
+    } catch (e) {
+        console.error('Subjects load failed:', e);
+    }
+}
+
+function showAddSubjectModal() {
+    document.getElementById('add-subject-modal').style.display = 'block';
+}
+
+function closeAddSubjectModal() {
+    document.getElementById('add-subject-modal').style.display = 'none';
+    document.getElementById('add-subject-form').reset();
+}
+
+document.getElementById('add-subject-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+        code: document.getElementById('subject-code').value,
+        name: document.getElementById('subject-name').value,
+        professor: document.getElementById('subject-professor').value,
+        attendance: parseInt(document.getElementById('subject-attendance').value) || 0,
+        total_classes: parseInt(document.getElementById('subject-total').value) || 0
+    };
+    try {
+        await fetch(`${API_BASE}/subjects`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        closeAddSubjectModal();
+        loadSubjects();
+        loadDashboard();
+    } catch (e) {
+        console.error('Subject add failed:', e);
+    }
+});
+
+async function updateAttendance(subjectId, action) {
+    await fetch(`${API_BASE}/subjects/${subjectId}/attendance`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action})
+    });
+    loadSubjects();
+    loadDashboard();
+}
+
+async function deleteSubject(subjectId) {
+    if (confirm('Delete this subject?')) {
+        await fetch(`${API_BASE}/subjects/${subjectId}`, {method: 'DELETE'});
+        loadSubjects();
+        loadDashboard();
+    }
+}
+
+// ========== ASSIGNMENTS ==========
+async function loadAssignments() {
+    try {
+        const response = await fetch(`${API_BASE}/assignments`);
+        const assignments = await response.json();
+        document.getElementById('assignments-list').innerHTML = assignments.map(a => `
+            <div class="list-item ${a.completed ? 'completed' : ''}">
+                <div>
+                    <strong>${a.title}</strong><br>
+                    <small>${a.subject_code} - ${a.subject_name}</small><br>
+                    <small>Due: ${new Date(a.deadline).toLocaleDateString()}</small>
+                </div>
+                <div>
+                    <label class="switch">
+                        <input type="checkbox" ${a.completed ? 'checked' : ''} onchange="toggleAssignment(${a.id}, this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                    <button onclick="deleteAssignment(${a.id})" class="delete-btn">🗑️</button>
+                </div>
+            </div>
+        `).join('') || '<p>No assignments yet</p>';
+    } catch (e) {
+        console.error('Assignments load failed:', e);
+    }
+}
+
+async function showAddAssignmentModal() {
+    const subjectsRes = await fetch(`${API_BASE}/subjects`);
+    const subjects = await subjectsRes.json();
+    const select = document.getElementById('assignment-subject');
+    select.innerHTML = '<option value="">Select Subject</option>' + 
+        subjects.map(s => `<option value="${s.id}">${s.code} - ${s.name}</option>`).join('');
+    document.getElementById('add-assignment-modal').style.display = 'block';
+}
+
+function closeAddAssignmentModal() {
+    document.getElementById('add-assignment-modal').style.display = 'none';
+    document.getElementById('add-assignment-form').reset();
+}
+
+document.getElementById('add-assignment-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+        subject_id: parseInt(document.getElementById('assignment-subject').value),
+        title: document.getElementById('assignment-title').value,
+        deadline: document.getElementById('assignment-deadline').value
+    };
+    await fetch(`${API_BASE}/assignments`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    closeAddAssignmentModal();
+    loadAssignments();
+    loadDashboard();
+});
+
+async function toggleAssignment(id, completed) {
+    await fetch(`${API_BASE}/assignments/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({completed: completed ? 1 : 0})
+    });
+    loadAssignments();
+    loadDashboard();
+}
+
+async function deleteAssignment(id) {
+    if (confirm('Delete this assignment?')) {
+        await fetch(`${API_BASE}/assignments/${id}`, {method: 'DELETE'});
+        loadAssignments();
+        loadDashboard();
+    }
+}
+
+// ========== TIMETABLE ==========
+async function loadTimetable() {
+    try {
+        const response = await fetch(`${API_BASE}/timetable`);
+        const timetable = await response.json();
+        
+        if (timetable.length === 0) {
+            document.getElementById('timetable-list').innerHTML = '<p>No classes scheduled. Add your first class!</p>';
+            return;
+        }
+        
+        // Group by day and sort by time
+        const grouped = {};
+        timetable.forEach(t => {
+            if (!grouped[t.day]) grouped[t.day] = [];
+            grouped[t.day].push({
+                time: t.time_slot,
+                display: `${t.time_slot} - ${t.subject_code} (${t.room || 'TBD'})`
+            });
+        });
+        
+        // CORRECT DAY ORDER: Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6
+        const dayOrder = {
+            'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 
+            'Friday': 5, 'Saturday': 6
+        };
+        
+        const sortedDays = Object.keys(grouped).sort((a, b) => dayOrder[a] - dayOrder[b]);
+        
+        // Sort times chronologically within each day
+        sortedDays.forEach(day => {
+            grouped[day].sort((a, b) => {
+                const timeOrder = {
+                    '8:00-8:50': 1, '9:00-9:50': 2, '10:00-10:50': 3, 
+                    '11:00-11:50': 4, '12:00-12:50': 5,
+                    '14:00-15:40': 6, '15:50-17:30': 7, '17:40-19:20': 8
+                };
+                return (timeOrder[a.time] || 10) - (timeOrder[b.time] || 10);
+            });
+        });
+        
+        document.getElementById('timetable-list').innerHTML = `
+            ${sortedDays.map(day => `
+                <div class="list-item">
+                    <div>
+                        <strong>${day}</strong>
+                        <br><small>${grouped[day].map(c => c.display).join('<br>')}</small>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    } catch (e) {
+        console.error('Timetable load failed:', e);
+    }
+}
+
+async function showAddTimetableModal() {
+    try {
+        // Load subjects
+        const subjectsRes = await fetch(`${API_BASE}/subjects`);
+        const subjects = await subjectsRes.json();
+        const subjectSelect = document.getElementById('timetable-subject');
+        subjectSelect.innerHTML = '<option value="">Select Subject</option>' + 
+            subjects.map(s => `<option value="${s.id}">${s.code} - ${s.name}</option>`).join('');
+        
+        // Load existing timetable to check conflicts
+        const timetableRes = await fetch(`${API_BASE}/timetable`);
+        window.currentTimetable = await timetableRes.json();
+        
+        // Add day change listener
+        document.getElementById('timetable-day').addEventListener('change', filterTimeSlots);
+        
+        document.getElementById('add-timetable-modal').style.display = 'block';
+        filterTimeSlots(); // Initial filter
+    } catch (e) {
+        alert('Failed to load data');
+    }
+}
+
+// NEW: Filter time slots based on selected day
+function filterTimeSlots() {
+    const day = document.getElementById('timetable-day').value;
+    const timeSelect = document.getElementById('timetable-time');
+    
+    // Your exact time slots
+    const allTimes = [
+        '8:00-8:50', '9:00-9:50', '10:00-10:50', '11:00-11:50', 
+        '12:00-12:50', '14:00-15:40', '15:50-17:30', '17:40-19:20'
+    ];
+    
+    if (!day || !window.currentTimetable) {
+        timeSelect.innerHTML = '<option value="">Select Time Slot</option>' + 
+            allTimes.map(t => `<option value="${t}">${t}</option>`).join('');
+        return;
+    }
+
+    const takenSlots = window.currentTimetable
+        .filter(t => t.day === day)
+        .map(t => t.time_slot);
+    
+    const availableSlots = allTimes.filter(slot => !takenSlots.includes(slot));
+    
+    timeSelect.innerHTML = '<option value="">Select Time Slot</option>' + 
+        availableSlots.map(t => `<option value="${t}">${t} (Available)</option>`).join('');
+}
+
+
+function closeAddTimetableModal() {
+    document.getElementById('add-timetable-modal').style.display = 'none';
+    document.getElementById('add-timetable-form').reset();
+    // Remove listener to prevent duplicates
+    const daySelect = document.getElementById('timetable-day');
+    daySelect.replaceWith(daySelect.cloneNode(true));
+}
+
+document.getElementById('add-timetable-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+        day: document.getElementById('timetable-day').value,
+        time_slot: document.getElementById('timetable-time').value,
+        subject_id: parseInt(document.getElementById('timetable-subject').value),
+        room: document.getElementById('timetable-room').value || null
+    };
+    await fetch(`${API_BASE}/timetable`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    closeAddTimetableModal();
+    loadTimetable();
+});
+
+async function deleteTimetable(id) {
+    if (confirm('Delete this class?')) {
+        await fetch(`${API_BASE}/timetable/${id}`, {method: 'DELETE'});
+        loadTimetable();
+    }
+}
+
+function closeTimetableModal() {
+    document.getElementById('timetable-modal').style.display = 'none';
+}
+
+async function showWeeklyTimetable() {
+    try {
+        const response = await fetch(`${API_BASE}/weekly-timetable`);
+        const schedule = await response.json();
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // YOUR EXACT TIMINGS
+        const times = [
+            '8:00-8:50', '9:00-9:50', '10:00-10:50', '11:00-11:50', 
+            '12:00-12:50', 'LUNCH', '14:00-15:40', '15:50-17:30', '17:40-19:20'
+        ];
+        
+        let html = '<table><tr><th>Time</th>' + days.map(d => `<th>${d}</th>`).join('') + '</tr>';
+        
+        times.forEach(time => {
+            html += `<tr><td><strong>${time}</strong></td>`;
+            days.forEach(day => {
+                const classes = schedule.filter(([d, t, code]) => d === day && t === time);
+                const classHtml = classes.map(([d, t, code]) => `<div class="time-slot">${code}</div>`).join('');
+                html += `<td>${classHtml || ''}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</table>';
+        
+        document.getElementById('weekly-timetable').innerHTML = html;
+        document.getElementById('timetable-modal').style.display = 'block';
+    } catch (e) {
+        console.error('Weekly timetable failed:', e);
+    }
+}
+
+async function loadDashboard() {
+    try {
+        const response = await fetch(`${API_BASE}/dashboard`);
+        const data = await response.json();
+        document.getElementById('dashboard').innerHTML = `
+            <div class="card">
+                <h3>Today's Classes</h3>
+                <div style="text-align: center; padding: 20px;">
+                    <p>📅 Check timetable!</p>
+                    <button onclick="showWeeklyTimetable()" class="btn" style="width: 100%; margin-top: 10px;">
+                        View Timetable
+                    </button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Low Attendance</h3>
+                <div class="metric">${data.low_attendance}</div>
+                <small>subjects need attention</small>
+            </div>
+            <div class="card">
+                <h3>Upcoming Assignments</h3>
+                ${data.upcoming_assignments.map(a => `<div>${a.title}<br><small>${a.subject_code}</small></div>`).join('') || '<p>All caught up!</p>'}
+            </div>
+            <div class="card">
+                <h3>Total Subjects</h3>
+                <div class="metric">${data.total_subjects}</div>
+            </div>
+        `;
+    } catch (e) {
+        console.error('Dashboard load failed:', e);
+    }
+}
+
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
+    
+    if (tabName === 'dashboard') loadDashboard();
+    if (tabName === 'subjects') loadSubjects();
+    if (tabName === 'assignments') loadAssignments();
+    if (tabName === 'timetable') loadTimetable();
+}
+</script>
+
+</body>
+</html>
